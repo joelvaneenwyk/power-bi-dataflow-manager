@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 
 using System.Linq;
 using Microsoft.Extensions.Configuration;
+using System.Threading;
 
 namespace Microsoft.DataFlow.EmergencyBrake
 {
@@ -19,29 +20,51 @@ namespace Microsoft.DataFlow.EmergencyBrake
     {
         public MonitorDataFlows(IDataFlowService dataFlowService, IConfiguration configuration)
         {
-            DataFlowServices = dataFlowService;
-            _config = configuration;
+            _dataFlowServices = dataFlowService;
+            _config = configuration;            
         }
 
         private readonly IConfiguration _config;
 
-        private readonly IDataFlowService DataFlowServices;
+        private readonly IDataFlowService _dataFlowServices;
 
+        private int _pollingInterval => Convert.ToInt32(_config["PollingIntervalInMinutes"]);
+
+        private int _monitorDuration => Convert.ToInt32(_config["MonitorTImeInMinutes"]);
+
+        private int _timeout => Convert.ToInt32(_config["FailureTimeOutInMinutes"]);
+        
         [FunctionName("Orchestrator")]
         public  async Task<List<string>> RunOrchestrator(
-            [OrchestrationTrigger] IDurableOrchestrationContext context)
+            [OrchestrationTrigger] IDurableOrchestrationContext context, ILogger log)
         {
+            log.LogInformation($"Entered Orchestrator {context.CurrentUtcDateTime}");
+
             var outputs = new List<string>();
+
+            DateTime expiryTime = context.CurrentUtcDateTime.AddMinutes(_monitorDuration);
+
+            log.LogInformation($"Expiration Time = {expiryTime}");
 
             try
             {
 
-                outputs.Add(await context.CallActivityAsync<string>("MonitorDataFlowTransactions",""));
-                
+                while (context.CurrentUtcDateTime < expiryTime)
+                {
+
+                    log.LogInformation($"Current Time = {context.CurrentUtcDateTime}; Expiry Time = {expiryTime}");
+
+                    outputs.Add(await context.CallActivityAsync<string>("MonitorDataFlowTransactions", ""));
+
+                    var nextCheck = context.CurrentUtcDateTime.AddMinutes(_pollingInterval);
+                    await context.CreateTimer(nextCheck, CancellationToken.None);
+                }
+
+
             }
             catch (Exception ex)
-            {             
-                ex.Message.ToString();
+            {
+                log.LogError(ex, ex.Message);
             }
 
             return outputs;
@@ -51,31 +74,42 @@ namespace Microsoft.DataFlow.EmergencyBrake
         [FunctionName("MonitorDataFlowTransactions")]
         public async Task<bool> MonitorDataFlowTransactions([ActivityTrigger] ILogger log)
         {
-            
-            int timeout = Convert.ToInt32(_config["FailureTimeOutInMinutes"]);
 
-            var dataFlows = await DataFlowServices.GetDataFlows();
+            log.LogInformation($"Entered MonitorDataFlowTransactions = {DateTime.Now}");
 
-            var transactionList = new List<DataFlowTransaction>();
+            try
+            {
 
-            foreach (var dataFlow in dataFlows) {
+                var dataFlows = await _dataFlowServices.GetDataFlows();
 
-                var item = (await DataFlowServices.GetDataFlowTransactions(dataFlow.objectId)).FirstOrDefault();
-                if (item != null)
+                var transactionList = new List<DataFlowTransaction>();
+
+                foreach (var dataFlow in dataFlows)
                 {
-                    item.DataFlowId = dataFlow.objectId;
-                    transactionList.Add(item);
+
+                    var item = (await _dataFlowServices.GetDataFlowTransactions(dataFlow.objectId)).FirstOrDefault();
+                    if (item != null)
+                    {
+                        item.DataFlowId = dataFlow.objectId;
+                        transactionList.Add(item);
+                    }
                 }
+
+                log.LogInformation($"Transactions returned = {transactionList.Count}");
+
+                var erroredList = transactionList.Where(x => x.status.ToLower() == "failed" || x.status.ToLower() == "error").ToList();
+
+                //Hanging Processes
+                erroredList.AddRange(transactionList.Where(x => x.status.ToLower() == "in progress" && (DateTime.Now - x.startTime).Minutes > _timeout).ToList());
+
+                if (erroredList.Any())
+                    transactionList.Where(x => x.status.ToLower() != "cancelled" || x.status.ToLower() != "success").ToList()
+                                   .ForEach(async e => await _dataFlowServices.CancelDataFlow(e.DataFlowId, e.id));
             }
-
-            var erroredList = transactionList.Where(x => x.status.ToLower() == "failed" || x.status.ToLower() == "error").ToList();
-            
-            //Hanging Processes
-            erroredList.AddRange(transactionList.Where(x => x.status.ToLower() == "in progress" && (DateTime.Now - x.startTime).Minutes > timeout).ToList());
-
-            if (erroredList.Any())
-                transactionList.Where(x => x.status.ToLower() == "in progress").ToList()
-                               .ForEach(async e => await DataFlowServices.CancelDataFlow(e.DataFlowId, e.id));
+            catch (Exception ex)
+            {
+                log.LogError(ex, ex.Message);
+            }
 
             return true;
         }
@@ -91,7 +125,7 @@ namespace Microsoft.DataFlow.EmergencyBrake
             string instanceId = await starter.StartNewAsync("Orchestrator", null);
 
             log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
-
+            
             return starter.CreateCheckStatusResponse(req, instanceId);
         }
     }
