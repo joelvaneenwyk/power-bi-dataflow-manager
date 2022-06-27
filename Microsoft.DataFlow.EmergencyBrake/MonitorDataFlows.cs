@@ -21,7 +21,7 @@ namespace Microsoft.DataFlow.EmergencyBrake
         public MonitorDataFlows(IDataFlowService dataFlowService, IConfiguration configuration)
         {
             _dataFlowServices = dataFlowService;
-            _config = configuration;            
+            _config = configuration;
         }
 
         private readonly IConfiguration _config;
@@ -35,7 +35,7 @@ namespace Microsoft.DataFlow.EmergencyBrake
         private int _timeout => Convert.ToInt32(_config["FailureTimeOutInMinutes"]);
         
         [FunctionName("Orchestrator")]
-        public  async Task<List<string>> RunOrchestrator(
+        public async Task<List<string>> RunOrchestrator(
             [OrchestrationTrigger] IDurableOrchestrationContext context, ILogger log)
         {
             log.LogInformation($"Entered Orchestrator {context.CurrentUtcDateTime}");
@@ -60,7 +60,6 @@ namespace Microsoft.DataFlow.EmergencyBrake
                     await context.CreateTimer(nextCheck, CancellationToken.None);
                 }
 
-
             }
             catch (Exception ex)
             {
@@ -72,7 +71,7 @@ namespace Microsoft.DataFlow.EmergencyBrake
 
 
         [FunctionName("MonitorDataFlowTransactions")]
-        public async Task<bool> MonitorDataFlowTransactions([ActivityTrigger] ILogger log)
+        public async Task<bool> MonitorDataFlowTransactions([ActivityTrigger] string dataVal, ILogger log)
         {
 
             log.LogInformation($"Entered MonitorDataFlowTransactions = {DateTime.Now}");
@@ -121,11 +120,11 @@ namespace Microsoft.DataFlow.EmergencyBrake
             [DurableClient] IDurableOrchestrationClient starter,
             ILogger log)
         {
-            // Function input comes from the request content.
+            
             string instanceId = await starter.StartNewAsync("Orchestrator", null);
 
             log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
-            
+
             return starter.CreateCheckStatusResponse(req, instanceId);
         }
     }
