@@ -1,4 +1,4 @@
-# DataFlowEmergencyBrake
+# DataFlow Emergency Brake
 Durable Function that utilizes Power BI REST API's to query, monitor and manage DataFlows
 
 In the event of a DataFlow error or non-responsive DataFlow (non-responsive as defined as the config value "FailureTimeOutInMinutes")
