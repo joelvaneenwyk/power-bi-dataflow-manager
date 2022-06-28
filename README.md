@@ -6,7 +6,11 @@ In the event of a DataFlow error or non-responsive DataFlow (non-responsive as d
 Configuration Keys:
 
 GroupId = Power BI Workspace that the user has access to (https://docs.microsoft.com/en-us/rest/api/power-bi/groups)
+
 SvcUser = Azure User Account with requisite permission (DataFlow.ReadWriteAll)
+
 Password = Password for Azure User Account
+
 ClientId = Azure App Registration ClientId  (https://docs.microsoft.com/en-us/power-bi/developer/embedded/register-app?tabs=customers%2CAzure)
+
 ClientSecret = Azure App Registration Secret
