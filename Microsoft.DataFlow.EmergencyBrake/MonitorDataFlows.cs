@@ -96,13 +96,16 @@ namespace Microsoft.DataFlow.EmergencyBrake
 
                 log.LogInformation($"Transactions returned = {transactionList.Count}");
 
-                var erroredList = transactionList.Where(x => x.status.ToLower() == "failed" || x.status.ToLower() == "error").ToList();
+                static bool stopped(DataFlowTransaction x) => x.status.ToLower() == "failed" || x.status.ToLower() == "error";
+
+                var erroredList = transactionList.Where(stopped).ToList();
 
                 //Hanging Processes
                 erroredList.AddRange(transactionList.Where(x => x.status.ToLower() == "in progress" && (DateTime.Now - x.startTime).Minutes > _timeout).ToList());
 
                 if (erroredList.Any())
-                    transactionList.Where(x => x.status.ToLower() != "cancelled" || x.status.ToLower() != "success").ToList()
+                    transactionList.Where(s => !stopped(s))
+                                   .Where(x => x.status.ToLower() != "cancelled" || x.status.ToLower() != "success").ToList()
                                    .ForEach(async e => await _dataFlowServices.CancelDataFlow(e.DataFlowId, e.id));
             }
             catch (Exception ex)
