@@ -33,7 +33,9 @@ namespace Microsoft.DataFlow.EmergencyBrake
         private int _monitorDuration => Convert.ToInt32(_config["MonitorTImeInMinutes"]);
 
         private int _timeout => Convert.ToInt32(_config["FailureTimeOutInMinutes"]);
-        
+
+        private bool _Retry => Convert.ToBoolean(_config["RestartCancelledDataFlow"]);
+
         [FunctionName("Orchestrator")]
         public async Task<List<string>> RunOrchestrator(
             [OrchestrationTrigger] IDurableOrchestrationContext context, ILogger log)
@@ -106,7 +108,8 @@ namespace Microsoft.DataFlow.EmergencyBrake
                 if (erroredList.Any())
                     transactionList.Where(s => !stopped(s))
                                    .Where(x => x.status.ToLower() != "cancelled" || x.status.ToLower() != "success").ToList()
-                                   .ForEach(async e => await _dataFlowServices.CancelDataFlow(e.DataFlowId, e.id));
+                                   .ForEach(async e => { await _dataFlowServices.CancelDataFlow(e.DataFlowId, e.id);
+                                                         if (_Retry) await _dataFlowServices.RefreshDataFlow(e.DataFlowId); });
             }
             catch (Exception ex)
             {

@@ -3,6 +3,7 @@ using Microsoft.DataFlow.Services.Model;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -28,65 +29,61 @@ namespace Microsoft.DataFlow.Services
 
         private readonly IConfiguration _config;
 
-        public async Task<bool> CancelDataFlow(string dataflowId, string dataflowTransactionId)
-        {
-            bool res = false;
-
-            using var reqMessage = Util.GetRequestMessage(HttpMethod.Get, $"https://api.powerbi.com/v1.0/myorg/groups/{groupId}/dataflows/{dataflowId}/transactions/{dataflowTransactionId}/cancel");
-            {
-
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await _authService.GetBearerToken());
-
-                var resp = await client.SendAsync(reqMessage);
-
-                res = resp.StatusCode == HttpStatusCode.OK;
-            }
-
-            return res;
-        }
-
         public async Task<List<DataflowInfo>> GetDataFlows()
         {
             
-            var res = new List<DataflowInfo>();
+            var resp = await CallAPI(() => Util.GetRequestMessage(HttpMethod.Get, $"https://api.powerbi.com/v1.0/myorg/groups/{groupId}/dataflows"));
+            
+            var body = await resp.Content.ReadAsStringAsync();
 
-            using var reqMessage = Util.GetRequestMessage(HttpMethod.Get, $"https://api.powerbi.com/v1.0/myorg/groups/{groupId}/dataflows");
-            {
-
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await _authService.GetBearerToken());
-
-                var resp = await client.SendAsync(reqMessage);
-
-                var body = await resp.Content.ReadAsStringAsync();
-
-                res = JsonConvert.DeserializeObject<List<DataflowInfo>>(JObject.Parse(body)["value"].ToString());
-            }
-
-            return res;
+            return JsonConvert.DeserializeObject<List<DataflowInfo>>(JObject.Parse(body)["value"].ToString());
+            
         }
 
         public async Task<List<DataFlowTransaction>> GetDataFlowTransactions(string dataFlowid)
         {
+            
+            var resp = await CallAPI(() => Util.GetRequestMessage(HttpMethod.Get, $"https://api.powerbi.com/v1.0/myorg/groups/{groupId}/dataflows/{dataFlowid}/transactions"));
 
-            var dftList = new List<DataFlowTransaction>();
+            var body = await resp.Content.ReadAsStringAsync();
 
-            using var reqMessage = Util.GetRequestMessage(HttpMethod.Get, $"https://api.powerbi.com/v1.0/myorg/groups/{groupId}/dataflows/{dataFlowid}/transactions"); 
+            return JsonConvert.DeserializeObject<List<DataFlowTransaction>>(JObject.Parse(body)["value"].ToString());
+
+        }
+
+        public async Task<bool> CancelDataFlow(string dataflowId, string dataflowTransactionId)
+        {
+            
+            var resp = await CallAPI(() => Util.GetRequestMessage(HttpMethod.Post, $"https://api.powerbi.com/v1.0/myorg/groups/{groupId}/dataflows/{dataflowId}/transactions/{dataflowTransactionId}/cancel"));
+
+            return resp.StatusCode == HttpStatusCode.OK;
+
+        }
+
+        public async Task<bool> RefreshDataFlow(string dataflowId)
+        {
+
+            var reqBody =  new Dictionary<string, string>() { { "notifyOption", "NoNotification" } };
+
+            var resp = await CallAPI(() => Util.GetRequestMessage(HttpMethod.Post, $"https://api.powerbi.com/v1.0/myorg/groups/{groupId}/dataflows/{dataflowId}/refreshes", reqBody));
+
+            return resp.StatusCode == HttpStatusCode.OK;
+
+        }
+
+        private async Task<HttpResponseMessage> CallAPI(Func<HttpRequestMessage> RequestMessage) 
+        {
+
+            using var reqMessage = RequestMessage();
             {
 
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await _authService.GetBearerToken());
 
-                var resp = await client.SendAsync(reqMessage);
+                return await client.SendAsync(reqMessage);
 
-                var body = await resp.Content.ReadAsStringAsync();
-
-                dftList = JsonConvert.DeserializeObject<List<DataFlowTransaction>>(JObject.Parse(body)["value"].ToString());
-
-            }
-
-            return dftList;
+            }                   
         }
+
     }
 }

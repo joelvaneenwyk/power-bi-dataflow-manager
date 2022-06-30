@@ -12,5 +12,6 @@ namespace Microsoft.DataFlow.Services
 
         Task<bool> CancelDataFlow(string dataflowId, string dataflowTransactionId);
 
+        Task<bool> RefreshDataFlow(string dataflowId);
     }
 }
