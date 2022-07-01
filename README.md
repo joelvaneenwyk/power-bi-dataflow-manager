@@ -22,7 +22,11 @@ ClientSecret = Azure App Registration Secret
 
 Monitor Dataflows via Power BI REST APIs
 
+<div style="width: 60%; height: 60%">
+  
 ![CircuitBreakerMonitor](https://user-images.githubusercontent.com/84995595/176929712-0d4d446b-c079-4c18-a8c3-fcf972f263f5.png)
+
+</div>
 
 ## How it works
 
