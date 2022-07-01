@@ -38,8 +38,8 @@ Monitor Dataflows via Power BI REST APIs.
 [Power BI Dataflow APIs](https://docs.microsoft.com/en-us/rest/api/power-bi/dataflows)
 
 
-![CircuitBreakerMonitor](https://user-images.githubusercontent.com/84995595/176929712-0d4d446b-c079-4c18-a8c3-fcf972f263f5.png)
 
 
+![CircuitBreakerMonitor](https://user-images.githubusercontent.com/84995595/176934730-41a11b33-08bf-4d9c-8388-9e82a8bccc41.png)
 
 
