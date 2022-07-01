@@ -6,23 +6,25 @@ Durable Function that utilizes Power BI REST API's to Monitor and Manage DataFlo
 3) Retry (if configured) restart the cancelled Dataflows
 
 
-# Configuration Keys:
+## Configuration Keys:
 
-GroupId = Power BI Workspace that the user has access to 
-(https://docs.microsoft.com/en-us/rest/api/power-bi/groups)
+GroupId = Power BI Workspace that the user has access to [Documentation] (https://docs.microsoft.com/en-us/rest/api/power-bi/groups)
 
 SvcUser = Azure User Account with requisite permission (DataFlow.ReadWriteAll)
 
 Password = Password for Azure User Account
 
-ClientId = Azure App Registration ClientId  
-(https://docs.microsoft.com/en-us/power-bi/developer/embedded/register-app?tabs=customers%2CAzure)
+ClientId = ClientId value of [Azure App Registration] (https://docs.microsoft.com/en-us/power-bi/developer/embedded/register-app?tabs=customers%2CAzure)
 
 ClientSecret = Azure App Registration Secret
 
-# How it works
+## How it works
 
 Monitor Dataflows via Power BI REST APIs
 
 ![CircuitBreakerMonitor](https://user-images.githubusercontent.com/84995595/176929712-0d4d446b-c079-4c18-a8c3-fcf972f263f5.png)
+
+## How it works
+
+<img align="center" width="150" height="200" src="https://user-images.githubusercontent.com/84995595/176929712-0d4d446b-c079-4c18-a8c3-fcf972f263f5.png">
 
