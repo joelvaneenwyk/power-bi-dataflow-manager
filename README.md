@@ -5,7 +5,8 @@ Durable Function that utilizes Power BI REST API's to Monitor and Manage DataFlo
 2) Cancels all DataFlows in the event of a DataFlow error or non-responsive DataFlow (non-responsive as defined as the config value "FailureTimeOutInMinutes")
 3) Retry (if configured) restart the cancelled Dataflows
 
-Configuration Keys:
+
+# Configuration Keys:
 
 GroupId = Power BI Workspace that the user has access to 
 (https://docs.microsoft.com/en-us/rest/api/power-bi/groups)
