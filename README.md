@@ -10,7 +10,7 @@ Durable Function that utilizes Power BI REST API's to Monitor and Manage DataFlo
 
 GroupId = Power BI Workspace that the user has access to [Documentation](https://docs.microsoft.com/en-us/rest/api/power-bi/groups)
 
-<a href="https://docs.microsoft.com/en-us/rest/api/power-bi/groups">Documentation</a>
+<a href="https://docs.microsoft.com/en-us/rest/api/power-bi/groups" target="_blank" rel="noopener noreferrer">Documentation</a>
 
 SvcUser = Azure User Account with requisite permission (DataFlow.ReadWriteAll)
 
