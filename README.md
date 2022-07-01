@@ -1,4 +1,7 @@
 # DataFlow Emergency Brake (aka Circuit Breaker)
+
+[Blog Post on ThePrestonVerse](https://theprestonverse.com/2022/07/01/power-bi-dataflow-monitor/)
+
 Durable Function that utilizes Power BI REST API's to Monitor and Manage DataFlows
 
 1) Periodically check status of any or all Dataflows in a given workspace (Polling interval is configurable)
