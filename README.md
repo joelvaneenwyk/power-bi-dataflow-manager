@@ -30,5 +30,4 @@ Monitor Dataflows via Power BI REST APIs
 
 ## How it works
 
-<img align="center" width="300" height="200" src="https://user-images.githubusercontent.com/84995595/176929712-0d4d446b-c079-4c18-a8c3-fcf972f263f5.png">
-
+![CircuitBreakerMonitor](https://user-images.githubusercontent.com/84995595/176929712-0d4d446b-c079-4c18-a8c3-fcf972f263f5.png)
