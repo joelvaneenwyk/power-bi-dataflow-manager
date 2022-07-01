@@ -81,11 +81,9 @@ namespace Microsoft.DataFlow.EmergencyBrake
             try
             {
 
-                var dataFlows = await _dataFlowServices.GetDataFlows();
-
                 var transactionList = new List<DataFlowTransaction>();
 
-                foreach (var dataFlow in dataFlows)
+                foreach (var dataFlow in await _dataFlowServices.GetDataFlows())
                 {
 
                     var item = (await _dataFlowServices.GetDataFlowTransactions(dataFlow.objectId)).FirstOrDefault();
@@ -106,10 +104,15 @@ namespace Microsoft.DataFlow.EmergencyBrake
                 erroredList.AddRange(transactionList.Where(x => x.status.ToLower() == "in progress" && (DateTime.Now - x.startTime).Minutes > _timeout).ToList());
 
                 if (erroredList.Any())
-                    transactionList.Where(s => !stopped(s))
-                                   .Where(x => x.status.ToLower() != "cancelled" || x.status.ToLower() != "success").ToList()
-                                   .ForEach(async e => { await _dataFlowServices.CancelDataFlow(e.DataFlowId, e.id);
-                                                         if (_Retry) await _dataFlowServices.RefreshDataFlow(e.DataFlowId); });
+                    if (_Retry)
+                        transactionList.Where(s => stopped(s)).ToList()
+                                       .ForEach(async e =>
+                                                await Task.WhenAll(_dataFlowServices.CancelDataFlow(e.DataFlowId, e.id))
+                                                .ContinueWith(cw => _dataFlowServices.RefreshDataFlow(e.DataFlowId)));
+                    else
+                        transactionList.Where(s => !stopped(s))
+                                       .Where(x => x.status.ToLower() != "cancelled" || x.status.ToLower() != "success").ToList()
+                                       .ForEach(async e =>  await _dataFlowServices.CancelDataFlow(e.DataFlowId, e.id));
             }
             catch (Exception ex)
             {
