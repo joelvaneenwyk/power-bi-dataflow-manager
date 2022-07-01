@@ -6,7 +6,7 @@ Durable Function that utilizes Power BI REST API's to Monitor and Manage DataFlo
 2) Cancels all DataFlows in the event of a DataFlow error or non-responsive DataFlow (non-responsive as defined as the config value "FailureTimeOutInMinutes")
 3) Retry (if configured) restart the cancelled Dataflows
 
-### More Info on blog at [ThePrestonVerse](https://theprestonverse.com/2022/07/01/power-bi-dataflow-monitor/)
+### More Info on the [The PrestonVerse](https://theprestonverse.com/2022/07/01/power-bi-dataflow-monitor/)
 
 ## Configuration Keys:
 
