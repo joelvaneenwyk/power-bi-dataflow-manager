@@ -1,6 +1,6 @@
 # DataFlow Emergency Brake (aka Circuit Breaker)
 
-##Blog Post [ThePrestonVerse](https://theprestonverse.com/2022/07/01/power-bi-dataflow-monitor/)
+## [ThePrestonVerse](https://theprestonverse.com/2022/07/01/power-bi-dataflow-monitor/)
 
 Durable Function that utilizes Power BI REST API's to Monitor and Manage DataFlows
 
