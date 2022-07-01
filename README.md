@@ -8,7 +8,7 @@ Durable Function that utilizes Power BI REST API's to Monitor and Manage DataFlo
 
 ## Configuration Keys:
 
-### Function Specific Configurations
+#### Function Specific Configurations
 FailureTimeOutInMinutes = (int) The amount of time a Dataflow can run before it is considered a hanging process or a silent failure
 
 PollingIntervalInMinutes - (int) The amount of time for the process to wait in between requests
@@ -17,7 +17,7 @@ MonitorTImeInMinutes = (int) The entire amount of time for this process to run
 
 RestartCancelledDataFlow = (bool) If true Restarts a Dataflow tha the process cancels
 
-### Integration Configurations
+#### Integration Configurations
 GroupId = Power BI Workspace that the user has access to [Documentation](https://docs.microsoft.com/en-us/rest/api/power-bi/groups)
 
 SvcUser = Azure User Account with requisite permission (DataFlow.ReadWriteAll)
@@ -33,3 +33,7 @@ ClientSecret = Azure App Registration Secret
 Monitor Dataflows via Power BI REST APIs
 
 ![CircuitBreakerMonitor](https://user-images.githubusercontent.com/84995595/176929712-0d4d446b-c079-4c18-a8c3-fcf972f263f5.png)
+
+
+
+
