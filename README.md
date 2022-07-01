@@ -28,9 +28,15 @@ ClientId = ClientId value of [Azure App Registration](https://docs.microsoft.com
 
 ClientSecret = Azure App Registration Secret
 
-## How it works
 
-Monitor Dataflows via Power BI REST APIs
+## Process
+
+Monitor Dataflows via Power BI REST APIs. 
+
+[Durable Function Monitor](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview?tabs=csharp#monitoring)
+
+[Power BI Dataflow APIs](https://docs.microsoft.com/en-us/rest/api/power-bi/dataflows)
+
 
 ![CircuitBreakerMonitor](https://user-images.githubusercontent.com/84995595/176929712-0d4d446b-c079-4c18-a8c3-fcf972f263f5.png)
 
