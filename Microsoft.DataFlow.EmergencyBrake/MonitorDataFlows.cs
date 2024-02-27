@@ -98,12 +98,18 @@ namespace Microsoft.DataFlow.EmergencyBrake
 
                 log.LogInformation($"Transactions returned = {transactionList.Count}");
 
-                static bool stopped(DataFlowTransaction x) => x.status.ToLower() == "failed" || x.status.ToLower() == "error";
+                static bool stopped(DataFlowTransaction x) => 
+                    x.status.Equals("failed", StringComparison.CurrentCultureIgnoreCase) 
+                    || x.status.Equals("error", StringComparison.CurrentCultureIgnoreCase);
 
                 var erroredList = transactionList.Where(stopped).ToList();
 
                 //Hanging Processes
-                erroredList.AddRange(transactionList.Where(x => x.status.ToLower() == "in progress" && (DateTime.Now - x.startTime).Minutes > _timeout).ToList());
+                erroredList.AddRange(transactionList
+                    .Where(x => 
+                        x.status.Equals("in progress", StringComparison.CurrentCultureIgnoreCase) 
+                        && (DateTime.Now - x.startTime).Minutes > _timeout)
+                    .ToList());
 
                 if (erroredList.Count != 0)
                     if (_Retry)
