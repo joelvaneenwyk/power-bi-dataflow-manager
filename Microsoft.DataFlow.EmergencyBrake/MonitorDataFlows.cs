@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.DataFlow.Services;
 using Microsoft.DataFlow.Services.Model;
 using Microsoft.Extensions.Logging;
@@ -13,6 +10,11 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using System.Threading;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using OrchestrationTriggerAttribute = Microsoft.Azure.Functions.Worker.OrchestrationTriggerAttribute;
+using ActivityTriggerAttribute = Microsoft.Azure.Functions.Worker.ActivityTriggerAttribute;
 
 namespace Microsoft.DataFlow.EmergencyBrake
 {
@@ -36,7 +38,7 @@ namespace Microsoft.DataFlow.EmergencyBrake
 
         private bool _Retry => Convert.ToBoolean(_config["RestartCancelledDataFlow"]);
 
-        [FunctionName("Orchestrator")]
+        [Function("Orchestrator")]
         public async Task<List<string>> RunOrchestrator(
             [OrchestrationTrigger] IDurableOrchestrationContext context, ILogger log)
         {
@@ -72,7 +74,7 @@ namespace Microsoft.DataFlow.EmergencyBrake
         }
 
 
-        [FunctionName("MonitorDataFlowTransactions")]
+        [Function("MonitorDataFlowTransactions")]
         public async Task<bool> MonitorDataFlowTransactions([ActivityTrigger] string dataVal, ILogger log)
         {
 
@@ -103,15 +105,18 @@ namespace Microsoft.DataFlow.EmergencyBrake
                 //Hanging Processes
                 erroredList.AddRange(transactionList.Where(x => x.status.ToLower() == "in progress" && (DateTime.Now - x.startTime).Minutes > _timeout).ToList());
 
-                if (erroredList.Any())
+                if (erroredList.Count != 0)
                     if (_Retry)
                         transactionList.Where(s => stopped(s)).ToList()
                                        .ForEach(async e =>
-                                                await Task.WhenAll(_dataFlowServices.CancelDataFlow(e.DataFlowId, e.id))
+                                                await _dataFlowServices.CancelDataFlow(e.DataFlowId, e.id)
                                                 .ContinueWith(cw => _dataFlowServices.RefreshDataFlow(e.DataFlowId)));
                     else
                         transactionList.Where(s => !stopped(s))
-                                       .Where(x => x.status.ToLower() != "cancelled" || x.status.ToLower() != "success").ToList()
+                                       .Where(x => 
+                                            !x.status.Equals("cancelled", StringComparison.CurrentCultureIgnoreCase) 
+                                            || !x.status.Equals("success", StringComparison.CurrentCultureIgnoreCase))
+                                       .ToList()
                                        .ForEach(async e =>  await _dataFlowServices.CancelDataFlow(e.DataFlowId, e.id));
             }
             catch (Exception ex)
@@ -122,11 +127,11 @@ namespace Microsoft.DataFlow.EmergencyBrake
             return true;
         }
 
-        [FunctionName("Monitor")]
+        [Function("Monitor")]
         [HttpPost(nameof(Monitor))]
-        public async Task<HttpResponseMessage> Monitor(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestMessage req,
-            [DurableClient] IDurableOrchestrationClient starter,
+        public async Task<IActionResult> Monitor(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req,
+            [Azure.Functions.Worker.DurableClient] IDurableOrchestrationClient starter,
             ILogger log)
         {
             
